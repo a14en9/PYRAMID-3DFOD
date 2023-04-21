@@ -1,0 +1,11 @@
+pytest
+mock
+contextlib2
+matplotlib
+open3d
+laspy
+laszip
+plyfile
+#conda install qhull==2019.1
+#conda install -c conda-forge -c davidcaron pclpy
+#pyproject.toml
