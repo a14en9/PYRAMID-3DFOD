@@ -3,14 +3,17 @@
 ## About
 
 This repo is about how to use machine learning algorithms like DBSCAN to cluster 3D point cloud data (collected by using CityMapper)
-and draw oriented 3D bounding boxes on each cluster (basically different vehicles in this case ).
+and draw oriented 3D bounding boxes on each cluster (basically different vehicles in this case ). This can be achieved by using the following steps:
 
+- Load input LAZ files and extract points that are labelled as vehicles, and save the extracted points into new PLY files.
+- All PLY files needed to be pre-prcossed by using methods avaiable in `utils.py`.
+- Use DBSCAN algorithm to cluster the processed data while drawing oriented 3D bounding boxes.
+- Output the boxes' information and save the points covered by all boxes into array. 
 
-<img src="3dfod.gif" width="100%">
+An examplar visualisation of the ouput result is shown below:
 
-The models are also used to inference detection results of imagery around St James's Park in Newcastle, downloaded from Google Earth Pro with different timestamps. The left image shows the inference results for the model trained with DOTA 1.0, and the right image shows the inference results for the model trained with DOTA 1.5. 
+<img src="3dfod.gif" width="60%">
 
-<img src="vis/Temp_DOTA_1_0.gif" width="50%"><img src="vis/Temp_DOTA_1_5.gif" width="50%">
 
 ### Project Team
 Dr Shidong Wang, Newcastle University  ([Shidong.wang@newcastle.ac.uk](mailto:Shidong.wang@newcastle.ac.uk))  
@@ -26,8 +29,7 @@ Newcastle University
 
 This section is intended to list the frameworks and tools you're using to develop this software. Please link to the home page or documentatation in each case.
 
-[Faster RCNN RoITrans with DOTA 1.0](https://github.com/NewcastleRSE/PYRAMID-object-detection/blob/main/configs/DOTA/faster_rcnn_RoITrans_r50_fpn_1x_dota.py)  
-[Faster RCNN RoITrans with DOTA 1.5](https://github.com/NewcastleRSE/PYRAMID-object-detection/blob/main/configs/DOTA1_5/faster_rcnn_RoITrans_r50_fpn_1x_dota1_5.py)  
+[Open3D](http://www.open3d.org/docs/release/)  
 
 ## Getting Started
 
@@ -35,12 +37,11 @@ This section is intended to list the frameworks and tools you're using to develo
 
 These frameworks require PyTorch 1.1 or higher. The dependent libs can be found in the [requirements.txt](requirements.txt). Specifically, it needs:
 - Linux
-- Python 3.5+ 
-- PyTorch 1.1
-- CUDA 9.0+
-- NCCL 2+
-- GCC 4.9+
-- [mmcv](https://github.com/open-mmlab/mmcv)
+- Python 3.9 
+- open3d
+- laspy
+- matplotlib (optional)
+- scikit-learn (optional)
 
 ### Installation
 
@@ -68,74 +69,52 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
 Then still won't install?
 
 
-a. Create a conda virtual environment and activate it. Then install Cython.
+a. Create a conda virtual environment and activate it. 
 
 ```shell
-conda create -n fod python=3.7 -y
-source activate fod
-
-conda install cython
+conda create -n 3dfod python=3.9 -y
+source activate 3dfod
 ```
 
-b. Install PyTorch stable or nightly and torchvision following the [official instructions](https://pytorch.org/). An example is given below:
+b. Clone this repository (Skip this step if the repo exists locally).
 
 ```shell
-conda install pytorch==1.5.0 torchvision==0.6.0 cudatoolkit=10.2 -c pytorch
+git clone https://github.com/cvhabitat/PYRAMID-3DFOD.git
+cd PYRAMID-3DFOD
 ```
 
-c. Clone this repository (Skip this step if the repo exists locally).
-
-```shell
-git clone https://github.com/NCL-PYRAMID/PYRAMID-object-detection.git
-cd PYRAMID-object-detection
-```
-
-d. Compile cuda extensions.
-
-```shell
-./compile.sh
-```
-
-e. Install all requirements ( the dependencies will be installed automatically after running `python setup.py develop`).
+c. Install all requirements.
 
 ```shell
 pip install -r requirements.txt
-python setup.py develop
-# or "pip install -e ."
 ```
 
-### Running Tests
+### Running
 
-Run the command below and the results will be generated at `dota_1_0_res` and `dota_1_5_res` folders.
+Run the command below and the results will be generated in the txt format and saved to a directory named `res`.
 ```shell
-python demo_large_image.py
+python 3DFOD.py
 ```
 
 ### Running Locally
-a. Download DOTA 1.0 and DOTA 1.5 datasets from [Data Download](https://captain-whu.github.io/DOTA/dataset.html).
-
-b. Organise the data and scripts as the following structure:
+a. Organise the data and scripts as the following structure:
 
 ```bash
-├─ DOTA_devkit                          # Data loading and evaluation of the results
-├─ configs                              # All configurations for training nad evaluation leave there
-├─ data                                 # Extract the downloaded data here
-    ├─ dota1_0/test1024
-        ├─ images/                      # Extracted images from DOTA 1.o
-        ├─ test_info.json               # Image info
-    ├─ dota1_5/test1024                 # Extracted images from DOTA 1.5
-        ├─ images/                      # Image info
-        ├─ test_info.json
-├─ mmdet                                # Functions from mmdet
-├─ tools                                # Tools
+├─ laz_format                           # Data folder where all original laz files saved
+    ├─ NZ2463.laz                       
+    ├─ ...
+├─ ply_format                           # Data folder where all extracted cars data saved
+    ├─ NZ2463.ply                       
+    ├─ ...
+├─ res                                  # Data folder to save the generated results
+    ├─ NZ2463.txt                       
+    ├─ ...
+├─ 3DFOD.py                             # Main function 
+├─ ply.py                               # Functions to read/write .ply files
 ├─ Dockerfile                           # Docker script
-├─ GETTING_STARTED.md                   # Instruction
-├─ compile.sh                           # Compile file
-├─ demo_large_image.py                  # Scripts for inferring results
-├─ env.yml                              # List of envs
-├─ mmcv_installisation_confs.txt        # Instruction to install the mmcv lib
+├─ pts.py                               # Function to read/write points
 ├─ requirements.txt                     # List all envs that need to be downloaded and installised
-├─ setup.py                             # Exam the setup
+├─ utils.py                             # Functions to process point cloud data
 ```
 
 
@@ -157,10 +136,9 @@ Any links to production environment, video demos and screenshots.
 
 ## Roadmap
 
-- [x] Data preprocessing
-- [x] Pretrained models, i.e., Faster RCNN with RoITrans on DOTA 1.0 and DOTA 1.5 
-- [x] Data and code are uploaded to [DAFNI platform](https://dafni.ac.uk/)   
-- [x] Test Docker 
+- [x] Data pre-processing
+- [ ] Data and code are uploaded to [DAFNI platform](https://dafni.ac.uk/)   
+- [ ] Test Docker 
 - [ ] Online Visualisation  
 
 ## Contributing
@@ -194,10 +172,3 @@ Please cite the associated papers for this work if you use this code:
 
 ## Acknowledgements
 This work was funded by a grant from the UK Research Councils, EPSRC grant ref. EP/L012345/1, “Example project title, please update”.
-
-## References
-
-- [Pytorch](https://pytorch.org/)
-- [DOTA Dataset](https://captain-whu.github.io/DOTA/)
-- [mmdetection](https://github.com/open-mmlab/mmdetection)
-- [AerialDetection](https://github.com/dingjiansw101/AerialDetection)
